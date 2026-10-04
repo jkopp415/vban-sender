@@ -1,5 +1,7 @@
-from PySide6.QtCore import QSize
-from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QWidget, QLabel
+from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QWidget
+
+from vban_sender.ui.loopback_settings import LoopbackSettings
+from vban_sender.ui.vban_settings import VBANSettings
 
 
 class MainWindow(QMainWindow):
@@ -9,21 +11,23 @@ class MainWindow(QMainWindow):
 
         # Set window properties
         self.setWindowTitle("VBAN Sender")
-        self.resize(QSize(1200, 800))
 
         # Set app stylesheet
         try:
             with open("src/style.qss", "r") as f:
-                styles = f.read()
-            self.setStyleSheet(styles)
+                _styles = f.read()
+            self.setStyleSheet(_styles)
         except FileNotFoundError:
             print("Stylesheet file 'style.qss' not found.")
 
         # Set main widget & layout
         # Content widgets will be added to the main layout
-        main_widget = QWidget()
-        main_layout = QVBoxLayout(main_widget)
-        self.setCentralWidget(main_widget)
+        _main_widget = QWidget()
+        _main_layout = QVBoxLayout(_main_widget)
+        self.setCentralWidget(_main_widget)
 
-        test_lbl = QLabel(text="Hello!")
-        main_layout.addWidget(test_lbl)
+        _vban_settings = VBANSettings()
+        _main_layout.addWidget(_vban_settings)
+
+        _loopback_settings = LoopbackSettings()
+        _main_layout.addWidget(_loopback_settings)
