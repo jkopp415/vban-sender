@@ -1,35 +1,48 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QSizePolicy
 
+from vban_sender.core import pipewire_manager
+
 
 class VBANSettings(QWidget):
 
     def __init__(self) -> None:
         super().__init__()
 
-        _layout = QVBoxLayout(self)
+        layout = QVBoxLayout(self)
 
         # ===== DESTINATION OPTIONS =====
-        _dest_panel = QWidget()
-        _dest_panel.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
-        _dest_panel_layout = QHBoxLayout(_dest_panel)
-        _layout.addWidget(_dest_panel)
+        dest_panel = QWidget()
+        dest_panel.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+        dest_panel_layout = QHBoxLayout(dest_panel)
+        layout.addWidget(dest_panel)
 
-        _ip_label = QLabel("Destination IP Address")
-        _dest_panel_layout.addWidget(_ip_label)
+        ip_label = QLabel("Destination IP Address")
+        dest_panel_layout.addWidget(ip_label)
 
-        _ip_input = QLineEdit()
-        _ip_input.setMaxLength(15)
-        _ip_input.setFixedWidth(125)
+        self._ip_input = QLineEdit()
+        self._ip_input.setMaxLength(15)
+        self._ip_input.setFixedWidth(125)
         # TODO: Add IP input validation
-        _dest_panel_layout.addWidget(_ip_input)
+        dest_panel_layout.addWidget(self._ip_input)
 
-        _dest_panel_layout.addSpacing(25)
+        dest_panel_layout.addSpacing(25)
 
-        _port_label = QLabel("Port")
-        _dest_panel_layout.addWidget(_port_label)
+        port_label = QLabel("Port")
+        dest_panel_layout.addWidget(port_label)
 
-        _port_input = QLineEdit()
-        _port_input.setMaxLength(4)
-        _port_input.setFixedWidth(40)
+        self._port_input = QLineEdit()
+        self._port_input.setMaxLength(4)
+        self._port_input.setFixedWidth(40)
         # TODO: Add port input validation
-        _dest_panel_layout.addWidget(_port_input)
+        dest_panel_layout.addWidget(self._port_input)
+
+        self._initialize_settings()
+
+    def _initialize_settings(self) -> None:
+        vban_settings = pipewire_manager.get_vban_config()['vban-send']
+
+        if "destination.ip" in vban_settings:
+            self._ip_input.setText(vban_settings["destination.ip"])
+
+        if "destination.port" in vban_settings:
+            self._port_input.setText(str(vban_settings["destination.port"]))
