@@ -1,12 +1,14 @@
+from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QSizePolicy
 
-from vban_sender.core import pipewire_manager
+from vban_sender.core.pipewire_manager import VBANConfModel
 
 
 class VBANSettings(QWidget):
 
-    def __init__(self) -> None:
+    def __init__(self, vban_conf: VBANConfModel) -> None:
         super().__init__()
+        self._vban_conf = vban_conf
 
         layout = QVBoxLayout(self)
 
@@ -23,6 +25,11 @@ class VBANSettings(QWidget):
         self._ip_input.setMaxLength(15)
         self._ip_input.setFixedWidth(125)
         # TODO: Add IP input validation
+        self._ip_input.textEdited.connect(
+            lambda text: self._on_line_edit_changed(
+                text, ["context.modules", 0, "args", "destination.ip"]
+            )
+        )
         dest_panel_layout.addWidget(self._ip_input)
 
         dest_panel_layout.addSpacing(25)
@@ -34,15 +41,26 @@ class VBANSettings(QWidget):
         self._port_input.setMaxLength(4)
         self._port_input.setFixedWidth(40)
         # TODO: Add port input validation
+        self._port_input.textEdited.connect(
+            lambda text: self._on_line_edit_changed(
+                int(text), ["context.modules", 0, "args", "destination.port"]
+            )
+        )
         dest_panel_layout.addWidget(self._port_input)
 
-        self._initialize_settings()
+        self._set_settings()
 
-    def _initialize_settings(self) -> None:
-        vban_settings = pipewire_manager.get_vban_config()['vban-send']
+    def _set_settings(self) -> None:
+        """Runs upon initialization, gets the VBAN sender settings from
+        PipeWire and fills the corresponding widgets."""
+        self._ip_input.setText(self._vban_conf.get_by_path(
+            ["context.modules", 0, "args", "destination.ip"]
+        ))
 
-        if "destination.ip" in vban_settings:
-            self._ip_input.setText(vban_settings["destination.ip"])
+        self._port_input.setText(str(self._vban_conf.get_by_path(
+            ["context.modules", 0, "args", "destination.port"]
+        )))
 
-        if "destination.port" in vban_settings:
-            self._port_input.setText(str(vban_settings["destination.port"]))
+    @Slot(object, list)
+    def _on_line_edit_changed(self, value: object, path: list):
+        self._vban_conf.update_by_path(path, value)

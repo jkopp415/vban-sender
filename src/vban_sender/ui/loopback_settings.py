@@ -2,12 +2,14 @@ from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QComboBox, QSizePolicy
 
 from vban_sender.core import pipewire_manager
+from vban_sender.core.pipewire_manager import VBANConfModel
 
 
 class LoopbackSettings(QWidget):
 
-    def __init__(self) -> None:
+    def __init__(self, vban_conf: VBANConfModel) -> None:
         super().__init__()
+        self._vban_conf = vban_conf
 
         layout = QVBoxLayout(self)
 
@@ -25,7 +27,7 @@ class LoopbackSettings(QWidget):
         input_panel_layout.addWidget(self._input_device_combo)
         self._initialize_input_device_combo()
 
-        self._initialize_settings()
+        self._set_settings()
 
     def _initialize_input_device_combo(self) -> None:
         """Gets a list of audio sources from the system to populate the input device combo."""
@@ -42,14 +44,18 @@ class LoopbackSettings(QWidget):
                 userData=device['name']
             )
 
-    def _initialize_settings(self) -> None:
-        loopback_settings = pipewire_manager.get_vban_config()["loopback"]
-
-        if "target.object" in loopback_settings:
-            idx = self._input_device_combo.findData(loopback_settings["target.object"])
-            if idx != -1:
-                self._input_device_combo.setCurrentIndex(idx)
+    def _set_settings(self) -> None:
+        """Runs upon initialization, gets the loopback settings from
+        PipeWire and fills the corresponding widgets."""
+        idx = self._input_device_combo.findData(self._vban_conf.get_by_path(
+            ["context.modules", 1, "args", "capture.props", "target.object"]
+        ))
+        if idx != -1:
+            self._input_device_combo.setCurrentIndex(idx)
 
     @Slot(int)
     def on_index_changed(self, _index: int) -> None:
-        pass
+        self._vban_conf.update_by_path(
+            ["context.modules", 1, "args", "capture.props", "target.object"],
+            self._input_device_combo.currentData()
+        )
